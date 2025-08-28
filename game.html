@@ -1,0 +1,81 @@
+<!--
+  game.html
+  Runs the Kitty Carson game using Phaser.js
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <title>Kitty Carson</title>
+
+
+        <style>
+            #blackCover {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-color: black;
+                z-index: 9999;
+            }
+        </style>
+
+
+
+    <link
+            rel="preload"
+            href="Assets/ChopinScript.otf"
+            as="font"
+            type="font/otf"
+            crossorigin
+    />
+    <link
+            rel="preload"
+            href="Assets/Pixellari.ttf"
+            as="font"
+            type="font/otf"
+            crossorigin
+    />
+    <style>
+        @font-face {
+            font-family: 'Chopin Script';
+            src: url('Assets/ChopinScript.otf') format('TrueType');
+        }
+        @font-face {
+            font-family: 'Pixellari';
+            src: url('Assets/Pixellari.ttf') format('TrueType');
+        }
+
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        body.started {
+            cursor: default;
+        }
+
+        canvas {
+            display: block;
+        }
+        </style>
+
+
+</head>
+<body>
+<div id="blackCover"></div>
+<! loads Phaser game engine>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+<script type="module" src="Js/main.js" defer></script>
+</body>
+</html>

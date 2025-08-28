@@ -1,0 +1,48 @@
+<!--
+  index.html
+  Creates Kitty Carson website and attatches game window
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" href="assets/icon.ico" type="image/x-icon">
+    <meta charset="UTF-8" />
+    <title>Kitty Carson</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<video autoplay loop muted playsinline class="vhs-overlay">
+    <source src="assets/overlay2.mp4" type="video/mp4" />
+</video>
+<div class="container">
+
+    <div class="logo-bar">
+        <a href="https://instagram.com/saifnot.safe" target="_blank" class="insta-link">
+            <img src="assets/ig.png" alt="Instagram" class="insta-logo"/>
+        </a>
+
+        <a href="index.html">
+            <img src="assets/kitty GIF.gif" alt="Kitty Logo" class="logo" />
+        </a>
+
+        <a href="feed.html" class="donate-button">
+            Feed Kitty Carson
+        </a>
+
+    </div>
+
+    <div class="frame-wrapper">
+<div class="iframe-wrapper" id="wrapper">
+    <iframe
+            src="game.html"
+            frameborder="0"
+            class="game-frame"
+            width="896"
+            height="576"
+    ></iframe>
+</div>
+        </div>
+</div>
+</body>
+</html>
