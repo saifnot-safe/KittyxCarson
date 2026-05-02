@@ -85,6 +85,17 @@ export default class HeartEnemy extends BaseEnemy {
         super.destroy(fromScene);
     }
 
+    spawn(x, y, level) {
+        this.setActive(true);
+        this.setVisible(true);
+        this.body.enable = true;
+
+        this.level = level;
+        this.health = 80 + level * 10;
+        this.xpGiven = 100 + level * 2.5;
+
+    }
+
 
 
 }

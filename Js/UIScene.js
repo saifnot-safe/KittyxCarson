@@ -18,6 +18,8 @@ export default class UIScene extends Phaser.Scene {
         this.load.image('healthOverlay', 'assets/Health Bar Overlay.png');
         this.load.image('title', 'assets/Kitty Carson Title 2.png');
         this.load.image('button', 'assets/button.png')
+        this.load.image('soundOn', 'assets/kittycarson-sound.png');
+        this.load.image('soundOff', 'assets/kittycarson-mute.png');
 
     }
     create() {
@@ -74,6 +76,31 @@ export default class UIScene extends Phaser.Scene {
             }
         });
 
+        this.soundMuted = true;
+        this.sound.mute = true;
+
+
+        this.soundBtn = this.add.image(width - 40, 40, 'soundOff')
+            .setInteractive()
+            .setScrollFactor(0)
+            .setDepth(1000)
+            .setScale(1.5);
+
+        this.soundBtn.on('pointerdown', () => {
+            this.soundBtn.setAlpha(0.5);
+            this.soundMuted = !this.soundMuted;
+            this.sound.mute = this.soundMuted;
+
+            this.soundBtn.setTexture(this.soundMuted ? 'soundOff' : 'soundOn');
+        });
+
+        this.soundBtn.on('pointerover', () => {
+            this.soundBtn.setAlpha(0.7);
+        })
+        this.soundBtn.on('pointerout', () => {
+            this.soundBtn.setAlpha(1);
+        })
+
         this.healthLabel = this.add
             .text(170, 15, 'Health ', {
                 fontFamily: 'Chopin Script',
@@ -87,7 +114,7 @@ export default class UIScene extends Phaser.Scene {
             fill: '#ffffff'
         });
 
-        this.scoreLabel = this.add.text(800, 27, 'Score:  ' + this.player.score, {
+        this.scoreLabel = this.add.text(750, 27, 'Score:  ' + this.player.score, {
             fontFamily: 'Arial',
             fontSize: '12px',
             fill: '#ffffff'
@@ -120,7 +147,7 @@ export default class UIScene extends Phaser.Scene {
             this.scoreLabel
         ]);
 
-        this.upgradeMenu = this.add.container(-210, 400);
+        this.upgradeMenu = this.add.container(-210, 475);
 
         const colors = {
             Health: 0xdfa6e0,
@@ -168,25 +195,17 @@ export default class UIScene extends Phaser.Scene {
             this.upgradeMenu.add([btn, label]);
         });
 
-        this.levelUpText = this.add.text(55, -27, 'Level up! x' + this.player.upgradePoints, {
+        this.upgradeMenu.setScale(1.4);
+
+        this.levelUpText = this.add.text(75, -27, 'Level up! x' + this.player.upgradePoints, {
             fontSize: '18px',
             fontFamily: 'Pixellari',
             color: '#eaefef',
 
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setScale(1.4, 0.6);
         this.levelUpText.setVisible(false);
 
         this.upgradeMenu.add(this.levelUpText);
-
-        this.menuOverlay = this.add
-            .renderTexture(0, 0, width, height)
-            .setOrigin(0, 0)
-            .setDepth(100)
-            .setScrollFactor(0);
-        this.menuOverlay.fill(0x000000, 1);
-
-        this.eraseCircle = this.make.graphics({ add: false });
-        this.eraseCircle.fillStyle(0xffffff, 1);
 
         this.gameOverContainer = this.add.container(0, 0).setVisible(false);
 
@@ -211,10 +230,7 @@ export default class UIScene extends Phaser.Scene {
             this.gameOverContainer.setVisible(true);
         });
 
-        this.input.once('pointerdown',  () => this.revealMainMenu());
-        this.input.keyboard.once('keydown', () => this.revealMainMenu());
-
-        this.menuRevealed = false;
+        this.revealMainMenu();
 
         // Removes main menu UI when the game starts
         this.events.on('GAME_STARTED', () => {
@@ -324,8 +340,6 @@ export default class UIScene extends Phaser.Scene {
     }
 
     revealMainMenu() {
-        if (this.menuRevealed) return;
-        this.menuRevealed = true;
 
         const { width, height } = this.cameras.main;
         const maxRadius = Math.hypot(width, height);
@@ -337,24 +351,15 @@ export default class UIScene extends Phaser.Scene {
             ease:     'linear',
             onUpdate: tween => {
                 const r = tween.getValue();
-                this.eraseCircle.clear();
 
                 const steps = 20;
                 for (let i = 0; i < steps; i++) {
                     const stepRadius = (r * i) / steps;
                     const alpha = 1 - Math.pow(i / steps, 2);
-                    this.eraseCircle.fillStyle(0xffffff, alpha);
-                    this.eraseCircle.fillCircle(0, 0, stepRadius);
                 }
 
-                this.menuOverlay.clear();
-                this.menuOverlay.fill(0x000000, 1);
-                this.menuOverlay.erase(this.eraseCircle, width / 2, height / 2);
             },
             onComplete: () => {
-                this.eraseCircle.destroy();
-                this.menuOverlay.destroy();
-
                 const mainScene = this.scene.get('MainScene');
                 mainScene.events.emit('MENU_REVEAL_COMPLETE');
             }

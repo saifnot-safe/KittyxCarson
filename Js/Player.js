@@ -11,7 +11,7 @@ constructor(scene, x,y, texture) {
 
     this.stats = {
         maxHealth: 100,
-        Attack: 10,
+        Attack: 20,
         Range: 200,
         Reload: 1000,
         Knockback: 10
@@ -116,7 +116,7 @@ levelUp() {
         switch (stat) {
             case 'Health':
                 this.upgradePoints -= 1;
-                this.stats.maxHealth += 20;
+                this.stats.maxHealth += 25;
                 this.statLevels[stat] += 1;
                 this.uiScene.updateStatBlocks('Health', this.statLevels.Health, 0xdfa6e0);
 
@@ -126,7 +126,7 @@ levelUp() {
                 break;
             case 'Attack':
                 this.upgradePoints -= 1;
-                this.stats.Attack += 5;
+                this.stats.Attack += 10;
                 this.statLevels[stat] += 1;
                 this.uiScene.updateStatBlocks('Attack', this.statLevels.Attack, 0xfa8282);
 
@@ -136,7 +136,7 @@ levelUp() {
                 break;
             case 'Range':
                 this.upgradePoints -= 1;
-                this.stats.Range += 150;
+                this.stats.Range += 175;
                 this.statLevels[stat] += 1;
                 this.uiScene.updateStatBlocks('Range', this.statLevels.Range,0x978cdb);
 
@@ -146,7 +146,7 @@ levelUp() {
                 break;
             case 'Reload':
                 this.upgradePoints -= 1;
-                this.stats.Reload = Math.max(100, this.stats.Reload - 100);
+                this.stats.Reload = Math.max(100, this.stats.Reload - 125);
                 this.statLevels[stat] += 1;
                 this.uiScene.updateStatBlocks('Reload', this.statLevels.Reload, 0x6bdbb4);
 
@@ -156,7 +156,7 @@ levelUp() {
                 break;
             case 'Knockback':
                 this.upgradePoints -= 1;
-                this.stats.Knockback += 50;
+                this.stats.Knockback += 60;
                 this.statLevels[stat] += 1;
                 this.uiScene.updateStatBlocks('Knockback', this.statLevels.Knockback, 0xe8dba7);
 

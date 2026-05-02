@@ -3,12 +3,6 @@ import PatrolEnemy from './PatrolEnemy.js';
 import EyeEnemy from './EyeEnemy.js';
 import HeartEnemy from "./HeartEnemy.js";
 
-/**
- * EnemySpawner.js
- * Used to initiate enemy spawning in game
- * Handles spawn zones, frequency and quantity
- */
-
 export default class EnemySpawner {
     constructor(scene, player, enemyGroup) {
         this.scene = scene;
@@ -16,6 +10,7 @@ export default class EnemySpawner {
         this.enemyGroup = enemyGroup;
 
         const cam = scene.cameras.main;
+
         this.spawnZones = {
             left: {
                 xMin: cam.worldView.x - 100,
@@ -29,8 +24,7 @@ export default class EnemySpawner {
                 yMin: cam.worldView.y,
                 yMax: cam.worldView.y + cam.height
             }
-        }; // creates spawn zones outside of player view
-
+        };
 
         this.spawnTimer = this.scene.time.addEvent({
             delay: 1200,
@@ -38,23 +32,14 @@ export default class EnemySpawner {
             callback: this.trySpawnEnemy,
             callbackScope: this
         });
-
-
-
     }
 
-    /**
-     * Used on game end/when returning to main menu
-     */
     reset() {
         if (!this.spawnTimer) return;
         this.scene.time.removeEvent(this.spawnTimer);
         this.spawnTimer = null;
     }
 
-    /**
-     * Starts spawn timer
-     */
     start() {
         if (this.spawnTimer) return;
         this.spawnTimer = this.scene.time.addEvent({
@@ -65,39 +50,6 @@ export default class EnemySpawner {
         });
     }
 
-    trySpawnEnemy() {
-        if (!this.scene.gameStarted) return;
-        const level = this.player.level;
-
-        // Weighted pool based on level
-        const pool = [];
-
-        if (level >= 1) pool.push('patroller');
-        if (level >= 2) pool.push('chaser');
-        if (level >= 4) pool.push('eyeball');
-        if (level >= 5) pool.push('heart');
-
-        // Add weights (duplicate types to increase odds)
-        if (level >= 5) {
-            pool.push('chaser', 'patroller'); // Extra weight for early types
-        }
-
-        const type = Phaser.Utils.Array.GetRandom(pool);
-
-        switch (type) {
-            case 'patroller': this.spawnPatroller(); break;
-            case 'chaser': this.spawnChaser(); break;
-            case 'eyeball': this.spawnEyeball(); break;
-            case 'heart': this.spawnHeart(); break;
-        }
-
-        // Increase spawn frequency over time
-        this.spawnTimer.delay = Math.max(1000, 5000 / (1 + Math.log10(level + 1)));
-    }
-
-    /**
-     * Updates spawn zones as player moves (keeps them out of player view)
-     */
     updateSpawnZones() {
         const cam = this.scene.cameras.main;
         const world = this.scene.physics.world.bounds;
@@ -110,132 +62,184 @@ export default class EnemySpawner {
         const yMax = Math.min(world.bottom, cam.worldView.bottom);
 
         this.spawnZones = {
-            left: {xMin: leftXMin, xMax: leftXMax, yMin: yMin, yMax: yMax},
-            right: {xMin: rightXMin, xMax: rightXMax, yMin: yMin, yMax: yMax}
+            left: { xMin: leftXMin, xMax: leftXMax, yMin, yMax },
+            right: { xMin: rightXMin, xMax: rightXMax, yMin, yMax }
         };
     }
 
-    /**
-     * Sets max amount of enemies based off level
-     * @param playerLevel
-     * @returns max number of enemies
-     */
-    getMaxEnemies(playerLevel) {
-        return 3 + playerLevel * 0.25;
+    trySpawnEnemy() {
+        if (!this.scene.gameStarted) return;
+
+        const level = this.player.level;
+        const spawnInView = Math.random() < 0.3;
+
+        const pool = [];
+        if (level >= 1) pool.push('patroller');
+        if (level >= 2) pool.push('chaser');
+        if (level >= 4) pool.push('eyeball');
+        if (level >= 5) pool.push('heart');
+        if (level >= 5) pool.push('chaser', 'patroller');
+
+        const type = Phaser.Utils.Array.GetRandom(pool);
+
+        switch (type) {
+            case 'patroller': this.spawnPatroller(spawnInView); break;
+            case 'chaser': this.spawnChaser(spawnInView); break;
+            case 'eyeball': this.spawnEyeball(); break;
+            case 'heart': this.spawnHeart(spawnInView); break;
+        }
+
+        this.spawnTimer.delay = Math.max(1000, 5000 / (1 + Math.log10(level + 1)));
     }
 
-    spawnPatroller() {
+    getMaxEnemies(level) {
+        return 3 + level * 0.5;
+    }
+
+    getInViewX() {
+        const cam = this.scene.cameras.main;
+        const padding = 80;
+        const minDist = 120;
+
+        let x;
+        do {
+            x = Phaser.Math.Between(
+                cam.worldView.x + padding,
+                cam.worldView.right - padding
+            );
+        } while (Math.abs(x - this.player.x) < minDist);
+
+        return x;
+    }
+
+    applySpawnEffect(enemy) {
+        enemy.isSpawning = true;
+        enemy.setAlpha(0.3);
+
+        if (enemy.body) enemy.body.enable = false;
+
+        const flicker = this.scene.tweens.add({
+            targets: enemy,
+            alpha: { from: 0.2, to: 0.8 },
+            duration: 100,
+            yoyo: true,
+            repeat: 6
+        });
+
+        this.scene.time.delayedCall(800, () => {
+            enemy.isSpawning = false;
+            flicker.stop(); // fixes alpha bug
+            enemy.setAlpha(1);
+            if (enemy.body) enemy.body.enable = true;
+        });
+    }
+
+    spawnChaser(spawnInView) {
         if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) return;
 
-        const zoneKeys = Object.keys(this.spawnZones);
-        const spawnZone = this.spawnZones[zoneKeys[Phaser.Math.Between(0, zoneKeys.length - 1)]];//picks random key
+        let x, y = 500;
 
-        const spawnLocation = Phaser.Math.Between(1, 4); // Sets a 75% chance of patrollers spawning on platforms
+        if (spawnInView) {
+            x = this.getInViewX();
+        } else {
+            const zoneKeys = Object.keys(this.spawnZones);
+            const sz = this.spawnZones[zoneKeys[Phaser.Math.Between(0, zoneKeys.length - 1)]];
+            x = Phaser.Math.Between(sz.xMin, sz.xMax);
+        }
 
+        const enemy = new ChaserEnemy(this.scene, x, y, this.player);
+        enemy.spawn(x, y, this.player.level);
+
+        this.applySpawnEffect(enemy);
+        this.enemyGroup.add(enemy);
+    }
+
+    spawnPatroller(spawnInView) {
+        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) return;
+
+        const spawnLocation = Phaser.Math.Between(1, 4);
         const MAX_ENEMIES_PER_PLATFORM = 1;
+        const cam = this.scene.cameras.main;
 
-        if (spawnLocation != 1) {
-            const cam = this.scene.cameras.main;
-
-            // Use your array of rectangles (platforms[])
+        if (spawnLocation !== 1) {
             const validPlatforms = this.scene.platforms.filter(platform => {
                 const bounds = platform.getBounds();
                 return (
-                    (bounds.right < cam.worldView.x - 50 || bounds.left > cam.worldView.right + 50) &&
+                    (
+                        spawnInView ||
+                        bounds.right < cam.worldView.x - 50 ||
+                        bounds.left > cam.worldView.right + 50
+                    ) &&
                     (platform.enemyCount || 0) < MAX_ENEMIES_PER_PLATFORM
                 );
-            }); // Makes sure there is space on platforms for a patroller to spawn or else patrollers spawn on ground
+            });
 
             if (validPlatforms.length === 0) return;
 
             const platform = Phaser.Utils.Array.GetRandom(validPlatforms);
-
             const bounds = platform.getBounds();
 
             const x = Phaser.Math.Between(bounds.left + 10, bounds.right - 10);
-            const y = bounds.top - 10; // Manually sets platform bounds since platforms are not collidable
+            const y = bounds.top - 10;
 
             const enemy = new PatrolEnemy(this.scene, x, y, this.player, platform);
             enemy.spawn(x, y, this.player.level);
+
+            this.applySpawnEffect(enemy);
             this.enemyGroup.add(enemy);
 
             platform.enemyCount = (platform.enemyCount || 0) + 1;
-            enemy.platform = platform; // Save reference to reduce later on death
+            enemy.platform = platform;
 
         } else {
-            const x = Phaser.Math.Between(spawnZone.xMin, spawnZone.xMax);
-            const y = 500 // Ground spawning
+            let x = spawnInView ? this.getInViewX() : Phaser.Math.Between(
+                this.spawnZones.left.xMin,
+                this.spawnZones.right.xMax
+            );
+
+            const y = 500;
 
             const enemy = new PatrolEnemy(this.scene, x, y, this.player, null);
             enemy.spawn(x, y, this.player.level);
+
+            this.applySpawnEffect(enemy);
             this.enemyGroup.add(enemy);
         }
     }
 
-    spawnChaser() {
-        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) return;
-        const zoneKeys = Object.keys(this.spawnZones);
-        const spawnZone = this.spawnZones[zoneKeys[Phaser.Math.Between(0, zoneKeys.length - 1)]];//picks random key
-
-        const x = Phaser.Math.Between(spawnZone.xMin, spawnZone.xMax);//picks random x coord
-        const y = 500;
-        const enemy = new ChaserEnemy(this.scene, x, y, this.player);
-        enemy.spawn(x, y, this.player.level);
-        this.enemyGroup.add(enemy);
-    }
-
     spawnEyeball() {
+        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) return;
 
-        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) {
-            return;
-        }
-
-        let x, y;
-        if (this.player.y >= 400) {
-            const world = this.scene.physics.world.bounds;
-            x = Phaser.Math.Between(world.x+100, world.width-100);
-            y = Phaser.Math.Between(250, 300);
-        } else {
-            const zoneKeys = Object.keys(this.spawnZones);
-            const sz     = this.spawnZones[zoneKeys[ Phaser.Math.Between(0, zoneKeys.length-1) ]];
-            x = Phaser.Math.Between(sz.xMin, sz.xMax);
-            y = Phaser.Math.Between(250, 300);
-        } // Allows eyeballs to spawn closer to the bottom than spawnzones allow if the player is low on the map
-        // (I noticed eyeballs were only spawning on the edges of the map)
+        const world = this.scene.physics.world.bounds;
+        const x = Phaser.Math.Between(world.x + 100, world.width - 100);
+        const y = Phaser.Math.Between(250, 300);
 
         const enemy = new EyeEnemy(this.scene, x, y, this.player);
         enemy.spawn(x, y, this.player.level);
+
+        this.applySpawnEffect(enemy);
         this.enemyGroup.add(enemy);
     }
 
-    spawnHeart() {
+    spawnHeart(spawnInView) {
+        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) return;
 
-        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) {
-            return;
-        }
-
-        const zoneKeys = Object.keys(this.spawnZones);
-        const spawnZone = this.spawnZones[zoneKeys[Phaser.Math.Between(0, zoneKeys.length - 1)]];//picks random key
-
-
-        const zoneWidth = spawnZone.xMax - spawnZone.xMin;
-        const centerMin = spawnZone.xMin + zoneWidth * 0.25;
-        const centerMax = spawnZone.xMax - zoneWidth * 0.25;
-        const x = Phaser.Math.Between(centerMin, centerMax);
+        let x = spawnInView ? this.getInViewX() : Phaser.Math.Between(
+            this.spawnZones.left.xMin,
+            this.spawnZones.right.xMax
+        );
 
         const y = 485;
-
 
         const tooClose = this.enemyGroup.getChildren().some(e =>
             e.active && e instanceof HeartEnemy && Math.abs(e.x - x) < 100
         );
         if (tooClose) return;
-        // Checks if any hearts are close to the x spawn point to prevent hearts overlapping
 
-            const enemy = new HeartEnemy(this.scene, x, y, this.player, null);
-            enemy.spawn(x, y, this.player.level);
-            this.enemyGroup.add(enemy);
+        const enemy = new HeartEnemy(this.scene, x, y, this.player);
+        enemy.spawn(x, y, this.player.level);
+
+        this.applySpawnEffect(enemy);
+        this.enemyGroup.add(enemy);
     }
-
 }
-

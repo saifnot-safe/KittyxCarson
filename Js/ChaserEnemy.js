@@ -29,7 +29,7 @@ export default class ChaserEnemy extends BaseEnemy {
         this.body.enable = true;
 
         this.level = level;
-        this.health = 30 + level * 2.5;
+        this.health = 40 + level * 2.5;
         this.xpGiven = 75 + level * 2.5;
         this.attackAmount = 5 + level * 2.5;
         this.speed = 120 + level * 2.5;

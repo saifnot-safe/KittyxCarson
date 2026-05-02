@@ -1,48 +1,75 @@
-<!--
-  index.html
-  Creates Kitty Carson website and attatches game window
--->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon" href="assets/icon.ico" type="image/x-icon">
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Kitty Carson</title>
-    <link rel="stylesheet" href="style.css" />
+
+    <link rel="icon" href="assets/icon.ico" type="image/x-icon">
+
+    <!-- Preload fonts -->
+    <link rel="preload" href="Assets/ChopinScript.otf" as="font" type="font/otf" crossorigin>
+    <link rel="preload" href="Assets/Pixellari.ttf" as="font" type="font/ttf" crossorigin>
+
+    <style>
+        /* Fonts */
+        @font-face {
+            font-family: 'Chopin Script';
+            src: url('Assets/ChopinScript.otf') format('opentype');
+        }
+
+        @font-face {
+            font-family: 'Pixellari';
+            src: url('Assets/Pixellari.ttf') format('truetype');
+        }
+
+        /* Layout reset */
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: black;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* VHS overlay */
+        .vhs-overlay {
+            mix-blend-mode: darken;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+
+            object-fit: cover;
+            opacity: 0.5;
+
+            pointer-events: none;
+            z-index: 2;
+        }
+    </style>
 </head>
+
 <body>
+
+<!-- Overlay -->
 <video autoplay loop muted playsinline class="vhs-overlay">
     <source src="assets/overlay2.mp4" type="video/mp4" />
 </video>
-<div class="container">
 
-    <div class="logo-bar">
-        <a href="https://instagram.com/saifnot.safe" target="_blank" class="insta-link">
-            <img src="assets/ig.png" alt="Instagram" class="insta-logo"/>
-        </a>
+<!-- Game -->
+<div id="game-container"></div>
 
-        <a href="index.html">
-            <img src="assets/kitty GIF.gif" alt="Kitty Logo" class="logo" />
-        </a>
+<!-- Phaser -->
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
 
-        <a href="feed.html" class="donate-button">
-            Feed Kitty Carson
-        </a>
+<!-- Game code -->
+<script type="module" src="Js/main.js"></script>
 
-    </div>
-
-    <div class="frame-wrapper">
-<div class="iframe-wrapper" id="wrapper">
-    <iframe
-            src="game.html"
-            frameborder="0"
-            class="game-frame"
-            width="896"
-            height="576"
-    ></iframe>
-</div>
-        </div>
-</div>
 </body>
 </html>
