@@ -83,8 +83,7 @@ export default class UIScene extends Phaser.Scene {
         this.soundBtn = this.add.image(width - 40, 40, 'soundOff')
             .setInteractive()
             .setScrollFactor(0)
-            .setDepth(1000)
-            .setScale(1.5);
+            .setDepth(1000).setScale(1.25);
 
         this.soundBtn.on('pointerdown', () => {
             this.soundBtn.setAlpha(0.5);
@@ -147,7 +146,7 @@ export default class UIScene extends Phaser.Scene {
             this.scoreLabel
         ]);
 
-        this.upgradeMenu = this.add.container(-210, 475);
+        this.upgradeMenu = this.add.container(-210, 495);
 
         const colors = {
             Health: 0xdfa6e0,
@@ -197,12 +196,12 @@ export default class UIScene extends Phaser.Scene {
 
         this.upgradeMenu.setScale(1.4);
 
-        this.levelUpText = this.add.text(75, -27, 'Level up! x' + this.player.upgradePoints, {
+        this.levelUpText = this.add.text(55, -27, 'Level up! x' + this.player.upgradePoints, {
             fontSize: '18px',
             fontFamily: 'Pixellari',
             color: '#eaefef',
 
-        }).setOrigin(0.5).setScale(1.4, 0.6);
+        }).setOrigin(0.5)
         this.levelUpText.setVisible(false);
 
         this.upgradeMenu.add(this.levelUpText);

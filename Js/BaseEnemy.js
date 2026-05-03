@@ -69,6 +69,7 @@ export default class BaseEnemy extends Phaser.Physics.Arcade.Sprite {
      * Handles enemy death and animation
      */
     death() {
+        this.scene.events.emit('enemyKilled');
         this.player.score += Math.floor(Math.random() * 26) + 75;
         this.isDying = true;
         const key = this.deathAnimKey || 'enemy death';

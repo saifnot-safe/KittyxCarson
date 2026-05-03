@@ -9,6 +9,17 @@ export default class EnemySpawner {
         this.player = player;
         this.enemyGroup = enemyGroup;
 
+        this.spawnCooldown = 0;
+
+        // Trigger cooldown on kill
+        this.scene.events.on('enemyKilled', () => {
+            this.spawnCooldown = Phaser.Math.Clamp(
+                1200 - this.player.level * 80,
+                300,
+                1200
+            );
+        });
+
         const cam = scene.cameras.main;
 
         this.spawnZones = {
@@ -54,6 +65,10 @@ export default class EnemySpawner {
         const cam = this.scene.cameras.main;
         const world = this.scene.physics.world.bounds;
 
+        if (this.spawnCooldown > 0) {
+            this.spawnCooldown -= this.scene.game.loop.delta;
+        }
+
         const leftXMin = Math.max(world.x, cam.worldView.x - 100);
         const leftXMax = Math.max(world.x, cam.worldView.x - 25);
         const rightXMin = Math.min(world.right, cam.worldView.right + 25);
@@ -70,6 +85,14 @@ export default class EnemySpawner {
     trySpawnEnemy() {
         if (!this.scene.gameStarted) return;
 
+        if (this.spawnCooldown > 0) return;
+
+        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level) - 1) return;
+
+        if (Math.random() < 0.25) {
+            this.scene.time.delayedCall(150, () => this.trySpawnEnemy());
+        }
+
         const level = this.player.level;
         const spawnInView = Math.random() < 0.3;
 
@@ -78,6 +101,7 @@ export default class EnemySpawner {
         if (level >= 2) pool.push('chaser');
         if (level >= 4) pool.push('eyeball');
         if (level >= 5) pool.push('heart');
+
         if (level >= 5) pool.push('chaser', 'patroller');
 
         const type = Phaser.Utils.Array.GetRandom(pool);
@@ -128,22 +152,20 @@ export default class EnemySpawner {
 
         this.scene.time.delayedCall(800, () => {
             enemy.isSpawning = false;
-            flicker.stop(); // fixes alpha bug
+            flicker.stop();
             enemy.setAlpha(1);
             if (enemy.body) enemy.body.enable = true;
         });
     }
 
     spawnChaser(spawnInView) {
-        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) return;
-
         let x, y = 500;
 
         if (spawnInView) {
             x = this.getInViewX();
         } else {
             const zoneKeys = Object.keys(this.spawnZones);
-            const sz = this.spawnZones[zoneKeys[Phaser.Math.Between(0, zoneKeys.length - 1)]];
+            const sz = this.spawnZones[Phaser.Utils.Array.GetRandom(zoneKeys)];
             x = Phaser.Math.Between(sz.xMin, sz.xMax);
         }
 
@@ -155,8 +177,6 @@ export default class EnemySpawner {
     }
 
     spawnPatroller(spawnInView) {
-        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) return;
-
         const spawnLocation = Phaser.Math.Between(1, 4);
         const MAX_ENEMIES_PER_PLATFORM = 1;
         const cam = this.scene.cameras.main;
@@ -192,10 +212,9 @@ export default class EnemySpawner {
             enemy.platform = platform;
 
         } else {
-            let x = spawnInView ? this.getInViewX() : Phaser.Math.Between(
-                this.spawnZones.left.xMin,
-                this.spawnZones.right.xMax
-            );
+            let x = spawnInView
+                ? this.getInViewX()
+                : Phaser.Math.Between(this.spawnZones.left.xMin, this.spawnZones.right.xMax);
 
             const y = 500;
 
@@ -208,9 +227,8 @@ export default class EnemySpawner {
     }
 
     spawnEyeball() {
-        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) return;
-
         const world = this.scene.physics.world.bounds;
+
         const x = Phaser.Math.Between(world.x + 100, world.width - 100);
         const y = Phaser.Math.Between(250, 300);
 
@@ -222,12 +240,9 @@ export default class EnemySpawner {
     }
 
     spawnHeart(spawnInView) {
-        if (this.enemyGroup.countActive(true) >= this.getMaxEnemies(this.player.level)) return;
-
-        let x = spawnInView ? this.getInViewX() : Phaser.Math.Between(
-            this.spawnZones.left.xMin,
-            this.spawnZones.right.xMax
-        );
+        let x = spawnInView
+            ? this.getInViewX()
+            : Phaser.Math.Between(this.spawnZones.left.xMin, this.spawnZones.right.xMax);
 
         const y = 485;
 

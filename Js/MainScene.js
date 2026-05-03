@@ -33,6 +33,11 @@ export default class MainScene extends Phaser.Scene {
         this.load.image('tearshot','assets/tearshot.png');
         this.load.image('lean','assets/lean.png');
 
+        this.load.spritesheet('candle', 'assets/kittycarson-candleanim.png', {
+            frameWidth: 48,
+            frameHeight: 48
+        });
+
         this.load.spritesheet('PatrolEnemy', 'assets/Gore Guy Sprite3.png',
             {
                 frameWidth: 660,
@@ -144,6 +149,13 @@ export default class MainScene extends Phaser.Scene {
         })
 
         this.anims.create({
+            key: 'candleAnim',
+            frames: this.anims.generateFrameNumbers('candle', { start: 0, end: 5 }),
+            frameRate: 3,
+            repeat: -1
+        });
+
+        this.anims.create({
             key: 'patrol enemy walk',
             frames: this.anims.generateFrameNumbers('PatrolEnemy', {start:0,end: 2}),
             frameRate: 6,
@@ -188,6 +200,7 @@ export default class MainScene extends Phaser.Scene {
         this.playerStartX = 448;
         this.playerStartY = 500;
         this.player = new Player(this, 448, 500, 'kitty');
+        this.player.setDepth(1);
         this.physics.add.collider(this.player, groundLayer);
         this.scene.launch('UIScene', {player: this.player});
 
@@ -251,14 +264,20 @@ export default class MainScene extends Phaser.Scene {
         // Creating lean spawning
 
 
-
-
         this.playerEnemyCollider = this.physics.add.overlap(this.player, this.enemies, this.handlePlayerHit, null, this);
         // Creating collision between player and enemy that will call handlePlayerHit when they overlap
         this.playerEyeBulletCollider = this.physics.add.overlap(this.player, this.eyeBullets, this.handlePlayerHit, null, this);
         this.playerHeartBulletCollider = this.physics.add.overlap(this.player, this.heartBullets, this.handlePlayerHit, null, this);
         this.enemyBulletCollider = this.physics.add.overlap(this.enemies, this.bullets, this.handleEnemyHit, null, this);
         // Setting up collision for other objects
+
+        const candle1 = this.add.sprite(96, 278, 'candleAnim');
+        candle1.setDepth(0);
+        candle1.play('candleAnim');
+
+        const candle2 = this.add.sprite(796, 278, 'candleAnim');
+        candle2.setDepth(0);
+        candle2.play('candleAnim');
 
 
         this.spotlightRadius = 150;
@@ -281,6 +300,8 @@ export default class MainScene extends Phaser.Scene {
      }).setDepth(10).setScrollFactor(0).setOrigin(0,0);
 
         // Setting up spotlight and gradient for shading
+
+
 
         this.platforms = [];
         const plat1 = this.add.rectangle(160, 394);
